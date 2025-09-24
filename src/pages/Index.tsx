@@ -1,14 +1,45 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { LandingPage } from "@/components/LandingPage";
+import { TenantRegistration } from "@/components/tenant/TenantRegistration";
+import { TenantDashboard } from "@/components/tenant/TenantDashboard";
+import { LandlordDashboard } from "@/components/landlord/LandlordDashboard";
+
+type AppState = 'landing' | 'tenant-registration' | 'tenant-dashboard' | 'landlord-dashboard';
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [appState, setAppState] = useState<AppState>('landing');
+
+  const handleRoleSelect = (role: 'tenant' | 'landlord') => {
+    if (role === 'tenant') {
+      setAppState('tenant-registration');
+    } else {
+      setAppState('landlord-dashboard');
+    }
+  };
+
+  const handleRegistrationComplete = () => {
+    setAppState('tenant-dashboard');
+  };
+
+  const handleBackToHome = () => {
+    setAppState('landing');
+  };
+
+  switch (appState) {
+    case 'tenant-registration':
+      return (
+        <TenantRegistration 
+          onBack={handleBackToHome}
+          onComplete={handleRegistrationComplete}
+        />
+      );
+    case 'tenant-dashboard':
+      return <TenantDashboard onLogout={handleBackToHome} />;
+    case 'landlord-dashboard':
+      return <LandlordDashboard onLogout={handleBackToHome} />;
+    default:
+      return <LandingPage onRoleSelect={handleRoleSelect} />;
+  }
 };
 
 export default Index;
