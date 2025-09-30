@@ -14,7 +14,259 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          recipient_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          recipient_id: string
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          recipient_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          created_at: string
+          default_contract_months: number
+          default_monthly_rent: number
+          id: string
+          landlord_id: string
+          property_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_contract_months?: number
+          default_monthly_rent?: number
+          id?: string
+          landlord_id: string
+          property_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_contract_months?: number
+          default_monthly_rent?: number
+          id?: string
+          landlord_id?: string
+          property_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_landlord_id_fkey"
+            columns: ["landlord_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          landlord_notes: string | null
+          payment_date: string
+          payment_month: string
+          status: Database["public"]["Enums"]["receipt_status"]
+          tenant_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          file_name: string
+          file_url: string
+          id?: string
+          landlord_notes?: string | null
+          payment_date: string
+          payment_month: string
+          status?: Database["public"]["Enums"]["receipt_status"]
+          tenant_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          landlord_notes?: string | null
+          payment_date?: string
+          payment_month?: string
+          status?: Database["public"]["Enums"]["receipt_status"]
+          tenant_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          created_at: string
+          id: string
+          landlord_response: string | null
+          message: string
+          request_type: Database["public"]["Enums"]["request_type"]
+          responded_at: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          landlord_response?: string | null
+          message: string
+          request_type: Database["public"]["Enums"]["request_type"]
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          landlord_response?: string | null
+          message?: string
+          request_type?: Database["public"]["Enums"]["request_type"]
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          contract_duration_months: number
+          created_at: string
+          guarantor_name: string | null
+          guarantor_phone: string | null
+          id: string
+          is_active: boolean
+          monthly_rent: number
+          paid_amount: number
+          room_number: string
+          start_date: string
+          total_contract_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_duration_months?: number
+          created_at?: string
+          guarantor_name?: string | null
+          guarantor_phone?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_rent?: number
+          paid_amount?: number
+          room_number: string
+          start_date?: string
+          total_contract_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_duration_months?: number
+          created_at?: string
+          guarantor_name?: string | null
+          guarantor_phone?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_rent?: number
+          paid_amount?: number
+          room_number?: string
+          start_date?: string
+          total_contract_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +275,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      receipt_status: "pending" | "verified" | "rejected"
+      request_status: "pending" | "approved" | "rejected"
+      request_type: "extension" | "move_out" | "maintenance"
+      user_role: "tenant" | "landlord"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +405,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      receipt_status: ["pending", "verified", "rejected"],
+      request_status: ["pending", "approved", "rejected"],
+      request_type: ["extension", "move_out", "maintenance"],
+      user_role: ["tenant", "landlord"],
+    },
   },
 } as const
