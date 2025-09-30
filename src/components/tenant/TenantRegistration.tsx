@@ -10,10 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 interface TenantRegistrationProps {
   onBack: () => void;
   onComplete: () => void;
+  onBackToLogin: () => void;
+  onBackToHome: () => void;
 }
 
 interface TenantData {
-  fullName: string;
+  fullName: string; 
   phoneNumber: string;
   email: string;
   roomNumber: string;
@@ -24,7 +26,7 @@ interface GuarantorData {
   guarantorPhone: string;
 }
 
-export function TenantRegistration({ onBack, onComplete }: TenantRegistrationProps) {
+export function TenantRegistration({ onBack, onComplete, onBackToLogin, onBackToHome }: TenantRegistrationProps) {
   const [step, setStep] = useState(1);
   const [tenantData, setTenantData] = useState<TenantData>({
     fullName: "",
@@ -75,6 +77,11 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
     setIsLoading(false);
     onComplete();
   };
+
+  // Fix: Implement navigation to landing page using the provided prop
+  function onbacktolandingpage(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    onBackToHome();
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-8 px-4">
@@ -268,6 +275,24 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
             </CardContent>
           </Card>
         )}
+
+        {/* Login and Back to Home Buttons */}
+        <div className="mt-8 text-center">
+          <Button 
+            variant="outline" 
+            onClick={onBackToLogin}
+            className="w-full max-w-xs mx-auto mb-4"
+          >
+            Login (Already have an account?)
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={onbacktolandingpage}
+            className="w-full max-w-xs mx-auto"
+          >
+            Back to Home
+          </Button>
+        </div>
       </div>
     </div>
   );

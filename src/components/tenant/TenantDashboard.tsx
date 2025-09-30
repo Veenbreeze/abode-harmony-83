@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,38 +20,38 @@ import {
 
 interface TenantDashboardProps {
   onLogout: () => void;
+  onQuickAction: (action: string) => void;
 }
 
-export function TenantDashboard({ onLogout }: TenantDashboardProps) {
+export function TenantDashboard({ onLogout, onQuickAction }: TenantDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview");
-
-  // Mock data - in real app, this would come from API
-  const tenantInfo = {
+  // Provide mock data so dashboard loads
+  const [tenantInfo, setTenantInfo] = useState<any>({
     name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 234 567 8900",
-    roomNumber: "A-101",
+    roomNumber: "A101",
+    email: "john@example.com",
+    phone: "123-456-7890",
+    paidAmount: 3600,
+    totalAmount: 4800,
     monthlyRent: 1200,
-    paidAmount: 8400,
-    totalAmount: 14400,
     stayDuration: "12 months",
-    remainingStay: "5 months"
-  };
-
-  const paymentHistory = [
+    remainingStay: "4 months"
+  });
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([
     { month: "September 2024", amount: 1200, status: "verified", date: "2024-09-01" },
     { month: "August 2024", amount: 1200, status: "verified", date: "2024-08-01" },
     { month: "July 2024", amount: 1200, status: "pending", date: "2024-07-01" },
     { month: "June 2024", amount: 1200, status: "verified", date: "2024-06-01" },
-  ];
-
-  const notifications = [
+  ]);
+  const [notifications, setNotifications] = useState<any[]>([
     { id: 1, message: "Your July payment receipt is under review", type: "info", date: "2 hours ago" },
     { id: 2, message: "Rent due reminder for October 2024", type: "warning", date: "1 day ago" },
     { id: 3, message: "Your move-out request has been approved", type: "success", date: "3 days ago" },
-  ];
+  ]);
 
-  const progressPercentage = (tenantInfo.paidAmount / tenantInfo.totalAmount) * 100;
+  const progressPercentage = tenantInfo && tenantInfo.totalAmount
+    ? (tenantInfo.paidAmount / tenantInfo.totalAmount) * 100
+    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -179,17 +180,37 @@ export function TenantDashboard({ onLogout }: TenantDashboardProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <Button variant="premium" className="h-auto p-4 flex-col gap-2">
+                  <Button
+                    variant="premium"
+                    className="h-auto p-4 flex-col gap-2"
+                    onClick={() => onQuickAction("upload-receipt")}
+                  >
                     <Upload className="h-6 w-6" />
                     Upload Receipt
                   </Button>
-                  <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                    onClick={() => onQuickAction("request-extension")}
+                  >
                     <Clock className="h-6 w-6" />
                     Request Extension
                   </Button>
-                  <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                    onClick={() => onQuickAction("moveout-request")}
+                  >
                     <FileText className="h-6 w-6" />
                     Move-out Request
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                    onClick={() => onQuickAction("report-maintenance")}
+                  >
+                    <AlertCircle className="h-6 w-6" />
+                    Report Maintenance
                   </Button>
                 </div>
               </CardContent>

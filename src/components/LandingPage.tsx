@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Shield, FileText, Clock, CheckCircle } from "lucide-react";
-import heroImage from "@/assets/hero-house.jpg";
+import heroImage from "@/assets/pexels-pixabay-164558.jpg";
 
 interface LandingPageProps {
   onRoleSelect: (role: 'tenant' | 'landlord') => void;

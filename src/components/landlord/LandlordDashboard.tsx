@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,94 +21,126 @@ import {
   Building2
 } from "lucide-react";
 
+// Types
+interface LandlordDashboardProps {
+  onLogout: () => void;
+  onQuickAction: (action: string) => void;
+}
+
+interface Tenant {
+  id: number;
+  name: string;
+  room: string;
+  email: string;
+  phone: string;
+  rent: number;
+  status: "active" | "pending";
+  lastPayment: string;
+  receiptsUploaded: number;
+  pendingReceipts: number;
+}
+
+interface Notification {
+  id: number;
+  tenant: string;
+  type: "receipt" | "request" | "moveout";
+  message: string;
+  time: string;
+  status: "pending" | "approved" | "rejected";
+}
+
+interface Stats {
+  totalTenants: number;
+  activeLeases: number;
+  pendingReceipts: number;
+  notifications: number;
+  monthlyRevenue: number;
+  occupancyRate: number;
+}
+
+interface TenantSearchInputProps {
+  searchTerm: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const TenantSearchInput: React.FC<TenantSearchInputProps> = ({ searchTerm, onChange }) => (
+  <div className="relative flex-1">
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <Input
+      placeholder="Search tenants by name or room number..."
+      value={searchTerm}
+      onChange={onChange}
+      className="pl-10"
+    />
+  </div>
+);
+
 interface LandlordDashboardProps {
   onLogout: () => void;
 }
 
-export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
+export function LandlordDashboard({ onLogout, onQuickAction }: LandlordDashboardProps) {
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const navigate = useNavigate();
 
-  // Mock data - in real app, this would come from API
-  const stats = {
-    totalTenants: 24,
-    activeLeases: 22,
-    pendingReceipts: 5,
-    notifications: 8,
-    monthlyRevenue: 28800,
-    occupancyRate: 92
-  };
+  // Placeholders for API data
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    totalTenants: 0,
+    activeLeases: 0,
+    pendingReceipts: 0,
+    notifications: 0,
+    monthlyRevenue: 0,
+    occupancyRate: 0
+  });
 
-  const tenants = [
-    { 
-      id: 1, 
-      name: "John Doe", 
-      room: "A-101", 
-      email: "john@example.com",
-      phone: "+1 234 567 8900",
-      rent: 1200, 
-      status: "active",
-      lastPayment: "2024-09-01",
-      receiptsUploaded: 3,
-      pendingReceipts: 1
-    },
-    { 
-      id: 2, 
-      name: "Jane Smith", 
-      room: "B-205", 
-      email: "jane@example.com",
-      phone: "+1 234 567 8901",
-      rent: 1350, 
-      status: "active",
-      lastPayment: "2024-08-28",
-      receiptsUploaded: 2,
-      pendingReceipts: 0
-    },
-    { 
-      id: 3, 
-      name: "Mike Johnson", 
-      room: "C-102", 
-      email: "mike@example.com",
-      phone: "+1 234 567 8902",
-      rent: 1100, 
-      status: "pending",
-      lastPayment: "2024-08-15",
-      receiptsUploaded: 1,
-      pendingReceipts: 2
-    }
-  ];
+  useEffect(() => {
+    // TODO: Fetch tenants, notifications, and stats from Django backend
+    // fetch("/api/landlord/tenants").then(res => res.json()).then(setTenants);
+    // fetch("/api/landlord/notifications").then(res => res.json()).then(setNotifications);
+    // fetch("/api/landlord/stats").then(res => res.json()).then(setStats);
+  }, []);
 
-  const notifications = [
-    { 
-      id: 1, 
-      tenant: "John Doe", 
-      type: "receipt", 
-      message: "Uploaded September rent receipt",
-      time: "2 hours ago",
-      status: "pending"
-    },
-    { 
-      id: 2, 
-      tenant: "Jane Smith", 
-      type: "request", 
-      message: "Requested payment extension for October",
-      time: "1 day ago",
-      status: "pending"
-    },
-    { 
-      id: 3, 
-      tenant: "Mike Johnson", 
-      type: "moveout", 
-      message: "Submitted move-out request for December",
-      time: "2 days ago",
-      status: "approved"
-    }
-  ];
-
-  const filteredTenants = tenants.filter(tenant => 
+  // Filter tenants
+  const filteredTenants = tenants.filter((tenant: Tenant) =>
     tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tenant.room.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Notification actions (just update state)
+  const handleApprove = (id: number) => {
+    setNotifications(notifications =>
+      notifications.map(n => n.id === id ? { ...n, status: "approved" } : n)
+    );
+  };
+  const handleReject = (id: number) => {
+    setNotifications(notifications =>
+      notifications.map(n => n.id === id ? { ...n, status: "rejected" } : n)
+    );
+  };
+
+  // Settings state
+  const [settings, setSettings] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+    propertyName: "",
+    defaultRent: "",
+    paymentDue: ""
+  });
+  const [settingsMessage, setSettingsMessage] = useState<string>("");
+
+  // Settings actions
+  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSettings({ ...settings, [e.target.id]: e.target.value });
+  };
+  const handleSettingsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsMessage("Settings saved successfully!");
+    setTimeout(() => setSettingsMessage(""), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -244,19 +277,35 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
-                    <Button variant="premium" className="h-auto p-4 flex-col gap-2">
+                    <Button
+                      variant="premium"
+                      className="h-auto p-4 flex-col gap-2"
+                      onClick={() => onQuickAction("review-receipts")}
+                    >
                       <FileText className="h-6 w-6" />
                       Review Receipts
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-auto p-4 flex-col gap-2"
+                      onClick={() => onQuickAction("send-notice")}
+                    >
                       <Bell className="h-6 w-6" />
                       Send Notice
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-auto p-4 flex-col gap-2"
+                      onClick={() => onQuickAction("add-tenant")}
+                    >
                       <Users className="h-6 w-6" />
                       Add Tenant
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-auto p-4 flex-col gap-2"
+                      onClick={() => onQuickAction("property-settings")}
+                    >
                       <Settings className="h-6 w-6" />
                       Property Settings
                     </Button>
@@ -272,15 +321,7 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
             <Card className="shadow-card">
               <CardContent className="p-4">
                 <div className="flex gap-4 items-center">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search tenants by name or room number..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+                  <TenantSearchInput searchTerm={searchTerm} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} />
                   <Button variant="outline">
                     <Filter className="h-4 w-4 mr-2" />
                     Filter
@@ -343,7 +384,8 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              ))
+              }
             </div>
           </TabsContent>
 
@@ -370,18 +412,21 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
                           <p className="text-xs text-muted-foreground">{notification.time}</p>
                         </div>
                       </div>
-                      
                       <div className="flex items-center gap-2">
-                        <Badge variant={notification.status === 'approved' ? 'default' : 'secondary'}>
+                        <Badge variant={
+                          notification.status === 'approved' ? 'default' :
+                          notification.status === 'pending' ? 'secondary' :
+                          'destructive'
+                        }>
                           {notification.status}
                         </Badge>
                         {notification.status === 'pending' && (
                           <div className="flex gap-2">
-                            <Button size="sm" variant="success">
+                            <Button size="sm" variant="success" onClick={() => handleApprove(notification.id)}>
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
                             </Button>
-                            <Button size="sm" variant="destructive">
+                            <Button size="sm" variant="destructive" onClick={() => handleReject(notification.id)}>
                               <X className="h-4 w-4 mr-1" />
                               Reject
                             </Button>
@@ -404,21 +449,24 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
                   <CardDescription>Update your login credentials</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input id="username" placeholder="Enter new username" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">New Password</Label>
-                    <Input id="password" type="password" placeholder="Enter new password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input id="confirmPassword" type="password" placeholder="Confirm new password" />
-                  </div>
-                  <Button variant="premium" className="w-full">
-                    Update Credentials
-                  </Button>
+                  <form onSubmit={handleSettingsSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input id="username" value={settings.username} onChange={handleSettingsChange} placeholder="Enter new username" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">New Password</Label>
+                      <Input id="password" type="password" value={settings.password} onChange={handleSettingsChange} placeholder="Enter new password" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input id="confirmPassword" type="password" value={settings.confirmPassword} onChange={handleSettingsChange} placeholder="Confirm new password" />
+                    </div>
+                    <Button variant="premium" className="w-full" type="submit">
+                      Update Credentials
+                    </Button>
+                    {settingsMessage && <p className="text-success text-center mt-2">{settingsMessage}</p>}
+                  </form>
                 </CardContent>
               </Card>
 
@@ -428,21 +476,24 @@ export function LandlordDashboard({ onLogout }: LandlordDashboardProps) {
                   <CardDescription>Configure property management preferences</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="propertyName">Property Name</Label>
-                    <Input id="propertyName" placeholder="Enter property name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="defaultRent">Default Monthly Rent</Label>
-                    <Input id="defaultRent" type="number" placeholder="Enter default rent amount" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentDue">Payment Due Date</Label>
-                    <Input id="paymentDue" type="number" min="1" max="31" placeholder="Day of month (1-31)" />
-                  </div>
-                  <Button variant="outline" className="w-full">
-                    Save Settings
-                  </Button>
+                  <form onSubmit={handleSettingsSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="propertyName">Property Name</Label>
+                      <Input id="propertyName" value={settings.propertyName} onChange={handleSettingsChange} placeholder="Enter property name" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultRent">Default Monthly Rent</Label>
+                      <Input id="defaultRent" type="number" value={settings.defaultRent} onChange={handleSettingsChange} placeholder="Enter default rent amount" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentDue">Payment Due Date</Label>
+                      <Input id="paymentDue" type="number" min="1" max="31" value={settings.paymentDue} onChange={handleSettingsChange} placeholder="Day of month (1-31)" />
+                    </div>
+                    <Button variant="outline" className="w-full" type="submit">
+                      Save Settings
+                    </Button>
+                    {settingsMessage && <p className="text-success text-center mt-2">{settingsMessage}</p>}
+                  </form>
                 </CardContent>
               </Card>
             </div>
