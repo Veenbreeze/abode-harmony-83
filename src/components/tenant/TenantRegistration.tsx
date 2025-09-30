@@ -3,83 +3,92 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, User, Phone, Mail, Home, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface TenantRegistrationProps {
   onBack: () => void;
   onComplete: () => void;
 }
 
-interface TenantData {
-  fullName: string;
-  phoneNumber: string;
-  email: string;
-  roomNumber: string;
-}
-
-interface GuarantorData {
-  guarantorName: string;
-  guarantorPhone: string;
-}
-
 export function TenantRegistration({ onBack, onComplete }: TenantRegistrationProps) {
   const [step, setStep] = useState(1);
-  const [tenantData, setTenantData] = useState<TenantData>({
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const [tenantData, setTenantData] = useState({
     fullName: "",
     phoneNumber: "",
     email: "",
+    password: "",
     roomNumber: ""
   });
-  const [guarantorData, setGuarantorData] = useState<GuarantorData>({
+  
+  const [guarantorData, setGuarantorData] = useState({
     guarantorName: "",
     guarantorPhone: ""
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleTenantSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenantData.fullName || !tenantData.phoneNumber || !tenantData.email || !tenantData.roomNumber) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
     setStep(2);
   };
 
   const handleGuarantorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guarantorData.guarantorName || !guarantorData.guarantorPhone) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all guarantor details.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast({
-      title: "Registration Successful!",
-      description: "Your tenant registration has been completed successfully."
-    });
-    
-    setIsLoading(false);
-    onComplete();
+
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: tenantData.email,
+        password: tenantData.password,
+        options: {
+          data: {
+            full_name: tenantData.fullName,
+            phone: tenantData.phoneNumber,
+            role: "tenant",
+          },
+          emailRedirectTo: `${window.location.origin}/tenant`,
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create account");
+
+      // Create tenant record
+      const { error: tenantError } = await supabase.from("tenants").insert({
+        user_id: authData.user.id,
+        room_number: tenantData.roomNumber,
+        guarantor_name: guarantorData.guarantorName,
+        guarantor_phone: guarantorData.guarantorPhone,
+      });
+
+      if (tenantError) throw tenantError;
+
+      toast({
+        title: "Success",
+        description: "Registration successful! Please login.",
+      });
+      
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-8 px-4">
       <div className="container mx-auto max-w-2xl">
-        {/* Header */}
         <div className="mb-8">
           <Button variant="ghost" onClick={onBack} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -92,7 +101,6 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
           </div>
         </div>
 
-        {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-4">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
@@ -109,7 +117,6 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
           </div>
         </div>
 
-        {/* Step 1: Personal Information */}
         {step === 1 && (
           <Card className="shadow-elevated">
             <CardHeader className="text-center">
@@ -124,10 +131,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
             <CardContent>
               <form onSubmit={handleTenantSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Full Name *
-                  </Label>
+                  <Label htmlFor="fullName">Full Name *</Label>
                   <Input
                     id="fullName"
                     placeholder="Enter your full name"
@@ -138,10 +142,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Phone Number *
-                  </Label>
+                  <Label htmlFor="phoneNumber">Phone Number *</Label>
                   <Input
                     id="phoneNumber"
                     type="tel"
@@ -153,10 +154,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email Address *
-                  </Label>
+                  <Label htmlFor="email">Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -168,10 +166,20 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="roomNumber" className="flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    Room Number *
-                  </Label>
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={tenantData.password}
+                    onChange={(e) => setTenantData({...tenantData, password: e.target.value})}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="roomNumber">Room Number *</Label>
                   <Input
                     id="roomNumber"
                     placeholder="Enter your room number"
@@ -190,7 +198,6 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
           </Card>
         )}
 
-        {/* Step 2: Guarantor Information */}
         {step === 2 && (
           <Card className="shadow-elevated">
             <CardHeader className="text-center">
@@ -203,7 +210,6 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Tenant Summary */}
               <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                 <h3 className="font-semibold mb-2">Your Information</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
@@ -216,10 +222,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
 
               <form onSubmit={handleGuarantorSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="guarantorName" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Guarantor's Full Name *
-                  </Label>
+                  <Label htmlFor="guarantorName">Guarantor's Full Name *</Label>
                   <Input
                     id="guarantorName"
                     placeholder="Enter guarantor's full name"
@@ -230,10 +233,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="guarantorPhone" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Guarantor's Phone Number *
-                  </Label>
+                  <Label htmlFor="guarantorPhone">Guarantor's Phone Number *</Label>
                   <Input
                     id="guarantorPhone"
                     type="tel"
@@ -256,7 +256,7 @@ export function TenantRegistration({ onBack, onComplete }: TenantRegistrationPro
                   </Button>
                   <Button 
                     type="submit" 
-                    variant="success" 
+                    variant="premium" 
                     size="lg"
                     className="flex-1"
                     disabled={isLoading}
