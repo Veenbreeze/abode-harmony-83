@@ -44,6 +44,6 @@ Ensure code follows the existing structure and naming conventions.
 
 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MPcodes..
 
 
